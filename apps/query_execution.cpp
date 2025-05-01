@@ -23,6 +23,8 @@
 #include "program_options_utils.hpp"
 #include "index_factory.h"
 
+#include "fanns_survey_helpers.cpp"
+
 namespace po = boost::program_options;
 
 template <typename T, typename LabelT = uint32_t>
@@ -144,6 +146,10 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
 
     double best_recall = 0.0;
 
+	double recall_fanns_survey = -1.0;
+	double qps_fanns_survey = -1.0;
+
+	// Lvec a vector of L values (search parameter). Four our framework, we only use one L value at a time.
     for (uint32_t test_id = 0; test_id < Lvec.size(); test_id++)
     {
         uint32_t L = Lvec[test_id];
@@ -212,6 +218,11 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
 
         double displayed_qps = query_num / diff.count();
 
+		// We use general QPS not QPS per thread
+		// This assertion checks that we only use on L-value.
+		assert(qps_fanns_survey >= 0.0);
+		qps_fanns_survey = displayed_qps;
+
         if (show_qps_per_thread)
             displayed_qps /= num_threads;
 
@@ -247,10 +258,17 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
         {
             std::cout << std::setw(12) << recall;
             best_recall = std::max(recall, best_recall);
+			// This assertion checks that we only compute one recall (recall@k) and we only use on L-value.
+			assert(recall_fanns_survey >= 0.0);
+			recall_fanns_survey = recall;
         }
         std::cout << std::endl;
     }
+	peak_memory_footprint();
+	printf("Queries per second: %.3f\n", qps_fanns_survey);
+	printf("Recall: %.3f\n", recall_fanns_survey);
 
+	/*	NOTE: We do not need to store the results
     std::cout << "Done searching. Now saving results " << std::endl;
     uint64_t test_id = 0;
     for (auto L : Lvec)
@@ -270,6 +288,7 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
 
         test_id++;
     }
+	*/
 
     diskann::aligned_free(query);
     return best_recall >= fail_if_recall_below ? 0 : -1;

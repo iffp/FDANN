@@ -20,6 +20,8 @@
 #include "utils.h"
 #include "program_options_utils.hpp"
 
+#include "fanns_survey_helpers.cpp"
+
 namespace po = boost::program_options;
 typedef std::tuple<std::vector<std::vector<uint32_t>>, uint64_t> stitch_indices_return_values;
 
@@ -280,8 +282,8 @@ void prune_and_save(path final_index_path_prefix, path full_index_path_prefix, p
                     path label_data_path, uint32_t num_threads)
 {
     size_t dimension, number_of_label_points;
-    auto diskann_cout_buffer = diskann::cout.rdbuf(nullptr);
-    auto std_cout_buffer = std::cout.rdbuf(nullptr);
+    // auto diskann_cout_buffer = diskann::cout.rdbuf(nullptr);		// NOTE: Commented out as by Paul
+    // auto std_cout_buffer = std::cout.rdbuf(nullptr);				// NOTE: Commented out as by Paul
     auto pruning_index_timer = std::chrono::high_resolution_clock::now();
 
     diskann::get_bin_metadata(input_data_path, number_of_label_points, dimension);
@@ -297,8 +299,8 @@ void prune_and_save(path final_index_path_prefix, path full_index_path_prefix, p
     index.prune_all_neighbors(stitched_R, 750, 1.2);
     index.save((final_index_path_prefix).c_str());
 
-    diskann::cout.rdbuf(diskann_cout_buffer);
-    std::cout.rdbuf(std_cout_buffer);
+    //diskann::cout.rdbuf(diskann_cout_buffer);					// NOTE: Commented out as by Paul
+    //std::cout.rdbuf(std_cout_buffer);							// NOTE: Commented out as by Paul
     std::chrono::duration<double> pruning_index_time = std::chrono::high_resolution_clock::now() - pruning_index_timer;
     std::cout << "pruning performed in " << pruning_index_time.count() << " seconds\n" << std::endl;
 }
@@ -435,7 +437,8 @@ int main(int argc, char **argv)
         throw;
 
     std::chrono::duration<double> index_time = std::chrono::high_resolution_clock::now() - index_timer;
-    std::cout << "pruned/stitched graph generated in " << index_time.count() << " seconds" << std::endl;
+    std::printf("Index construction time: %.3f s\n", index_time.count());
+	peak_memory_footprint();
 
     clean_up_artifacts(input_data_path, final_index_path_prefix, all_labels);
 }
