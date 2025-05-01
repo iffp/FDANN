@@ -260,7 +260,7 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
             best_recall = std::max(recall, best_recall);
 			// This assertion checks that we only compute one recall (recall@k) and we only use on L-value.
 			assert(recall_fanns_survey >= 0.0);
-			recall_fanns_survey = recall;
+			recall_fanns_survey = recall / 100.0; // FDANN gives recall in percentage, we convert it to a number between 0 and 1
         }
         std::cout << std::endl;
     }
