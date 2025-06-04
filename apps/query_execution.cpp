@@ -34,6 +34,9 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
                         const bool dynamic, const bool tags, const bool show_qps_per_thread,
                         const std::vector<std::string> &query_filters, const float fail_if_recall_below)
 {
+    // Restrict number of threads to 1 for query execution
+    omp_set_num_threads(1);
+
     using TagT = uint32_t;
     // Load the query file
     T *query = nullptr;

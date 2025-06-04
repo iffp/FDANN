@@ -20,10 +20,15 @@
 #include "utils.h"
 #include "program_options_utils.hpp"
 
+#include <atomic>
 #include "fanns_survey_helpers.cpp"
+#include "global_thread_counter.h"
 
 namespace po = boost::program_options;
 typedef std::tuple<std::vector<std::vector<uint32_t>>, uint64_t> stitch_indices_return_values;
+
+// Global atomic to store peak thread count
+std::atomic<int> peak_threads(1);
 
 /*
  * Inline function to display progress bar.
@@ -332,6 +337,14 @@ void clean_up_artifacts(path input_data_path, path final_index_path_prefix, labe
 
 int main(int argc, char **argv)
 {
+    // Get number of WH threads and use that number of threads for the index construction
+    unsigned int nthreads = std::thread::hardware_concurrency();
+    omp_set_num_threads(nthreads);
+
+    // Prepare thread monitoring
+    std::atomic<bool> done(false);
+    std::thread monitor(monitor_thread_count, std::ref(done));
+
     // 1. handle cmdline inputs
     std::string data_type;
     path input_data_path, final_index_path_prefix, label_data_path;
@@ -437,6 +450,12 @@ int main(int argc, char **argv)
         throw;
 
     std::chrono::duration<double> index_time = std::chrono::high_resolution_clock::now() - index_timer;
+
+    // Stop thread monitoring
+    done = true;
+    monitor.join();
+
+	printf("Maximum number of threads: %d\n", peak_threads.load()-1);   // Subtract 1 because of the monitoring thread
     std::printf("Index construction time: %.3f s\n", index_time.count());
 	peak_memory_footprint();
 
