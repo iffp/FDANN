@@ -63,14 +63,14 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
     {
 		// Read ground truth from .ivecs file
 		std::vector<std::vector<int>> ground_truth = read_ivecs(truthset_file);
+		// Extract info
+		gt_num = ground_truth.size();
+		gt_dim = ground_truth[0].size();
 		// Check if the number of queries matches the ground truth
         if (gt_num != query_num)
         {
             std::cout << "Error. Mismatch in number of queries and ground truth data" << std::endl;
         }
-		// Extract info
-		gt_num = ground_truth.size();
-		gt_dim = ground_truth[0].size();
 		// Allocate space for ground truth ids
 		gt_ids = new uint32_t[gt_num * gt_dim];
 		// Flatten the 2D vector into the 1D array
@@ -344,7 +344,7 @@ int main(int argc, char **argv)
                                        program_options_utils::DATA_TYPE_DESCRIPTION);
         required_configs.add_options()("dist_fn", po::value<std::string>(&dist_fn)->required(),
                                        program_options_utils::DISTANCE_FUNCTION_DESCRIPTION);
-        optional_configs.add_options()("gt_file", po::value<std::string>(&gt_file)->default_value(std::string("null")),
+        required_configs.add_options()("gt_file", po::value<std::string>(&gt_file)->default_value(std::string("null")),
                                        program_options_utils::GROUND_TRUTH_FILE_DESCRIPTION);
         required_configs.add_options()("index_path_prefix", po::value<std::string>(&index_path_prefix)->required(),
                                        program_options_utils::INDEX_PATH_PREFIX_DESCRIPTION);
@@ -357,7 +357,7 @@ int main(int argc, char **argv)
         required_configs.add_options()("search_list,L",
                                        po::value<std::vector<uint32_t>>(&Lvec)->multitoken()->required(),
                                        program_options_utils::SEARCH_LIST_DESCRIPTION);
-        optional_configs.add_options()("query_filters_file",
+        required_configs.add_options()("query_filters_file",
                                        po::value<std::string>(&query_filters_file)->required(),
                                        program_options_utils::FILTERS_FILE_DESCRIPTION);
         desc.add(required_configs);
