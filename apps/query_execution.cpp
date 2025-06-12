@@ -249,7 +249,7 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
 
 		// We use general QPS not QPS per thread
 		// This assertion checks that we only use on L-value.
-		assert(qps_fanns_survey >= 0.0);
+		assert(qps_fanns_survey < 0.0);
 		qps_fanns_survey = displayed_qps;
 
         if (show_qps_per_thread)
@@ -288,7 +288,7 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
             std::cout << std::setw(12) << recall;
             best_recall = std::max(recall, best_recall);
 			// This assertion checks that we only compute one recall (recall@k) and we only use on L-value.
-			assert(recall_fanns_survey >= 0.0);
+			assert(recall_fanns_survey < 0.0);
 			recall_fanns_survey = recall / 100.0; // FDANN gives recall in percentage, we convert it to a number between 0 and 1
         }
         std::cout << std::endl;

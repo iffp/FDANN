@@ -243,7 +243,10 @@ stitch_indices_return_values stitch_label_indices(
 
         std::tie(curr_label_index, curr_label_index_size) =
             diskann::load_label_index(curr_label_index_path, labels_to_number_of_points[lbl]);
-        curr_label_entry_point = (uint32_t)random(0, curr_label_index.size());
+		// The "-1" was added for the FANNS benchmark because otherwise, we can get random numbers 
+		// equal to curr_label_index.size(), which is out of bounds and inserts a rubbish-value
+		// into label_id_to_orig_id_map[lbl], which in turn yields an error during query execution.
+        curr_label_entry_point = (uint32_t)random(0, curr_label_index.size() - 1);
         label_entry_points[lbl] = label_id_to_orig_id_map[lbl][curr_label_entry_point];
 
         for (uint32_t node_point = 0; node_point < curr_label_index.size(); node_point++)
