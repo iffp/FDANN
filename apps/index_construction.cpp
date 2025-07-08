@@ -23,6 +23,9 @@
 #include <atomic>
 #include "fanns_survey_helpers.cpp"
 #include "global_thread_counter.h"
+#include <filesystem>
+#include <iostream>
+
 
 namespace po = boost::program_options;
 typedef std::tuple<std::vector<std::vector<uint32_t>>, uint64_t> stitch_indices_return_values;
@@ -276,6 +279,28 @@ stitch_indices_return_values stitch_label_indices(
     return std::make_tuple(stitched_graph, final_index_size);
 }
 
+// This function is added for the FANNS survey.
+// By default, both the full index and the pruned index are stored, which inflates the disk space usage by x2
+// We remove the full index after the pruned index is saved, to save disk space.
+void remove_full_index(const std::string& final_index_path_prefix) {
+    namespace fs = std::filesystem;
+    const std::string filenames[] = {
+        "_full",
+        "_full.data",
+        "_full_labels.txt",
+        "_full_labels_to_medoids.txt"
+    };
+
+    for (const auto& name : filenames) {
+        fs::path filepath = final_index_path_prefix + name;
+        std::error_code ec;
+        if (!fs::remove(filepath, ec)) {
+            std::cerr << "Failed to remove " << filepath << ": " << ec.message() << "\n";
+        }
+    }
+}
+
+
 /*
  * Applies the prune_neighbors function from src/index.cpp to
  * every node in the stitched graph.
@@ -301,6 +326,9 @@ void prune_and_save(path final_index_path_prefix, path full_index_path_prefix, p
 
     // not searching this index, set search_l to 0
     index.load(full_index_path_prefix.c_str(), num_threads, 1);
+
+	// remove the full index as we only need the pruned index for query execution (by FANNS survey team)
+	remove_full_index(final_index_path_prefix);
 
     std::cout << "parsing labels" << std::endl;
 
